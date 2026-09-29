@@ -11,7 +11,9 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The scrape alone runs ~9-15 min; check.js needs another ~6. At 15 the job
+    # was being cancelled mid-QA most days, so posters were never repaired.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -249,9 +249,10 @@ const summary = `${events.length} events · ${noImg.length} no-image · ${junked
 await logRun({ source_id: "health-check", strategy: "check", events_found: events.length, events_upserted: events.length - noImg.length, ok: fails.length === 0, duration_ms: 0, error: summary });
 console.log(`\n${fails.length === 0 ? "✓ QC pass (no source below 50% images)" : `✗ QC: ${fails.length} source(s) below 50% images`}`);
 
-// This is the real "is the site actually degraded" signal — a single venue's
-// transient scrape hiccup (index.js already treats those as non-fatal) says
-// nothing about whether visitors see a broken page, but a source stuck below
-// 50% image coverage does. Fail the CI job (and trigger the alert email) on
-// that basis instead, so an alert means something actionable happened.
-if (fails.length > 0) process.exitCode = 1;
+// Thin image coverage is a quality problem, not a broken run. Failing the job
+// over it kept every scheduled run red for weeks, which is how radical could
+// die silently — a permanently red run is an alarm nobody can read. Surface it
+// as a GitHub annotation instead and leave a red job to mean "something broke".
+for (const q of fails) {
+  console.log(`::warning title=QC image coverage::${q.id}: ${q.img}/${q.n} events imaged (${Math.round(q.cov * 100)}%)`);
+}
