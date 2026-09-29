@@ -2,16 +2,12 @@
 // Usage: node scraper/index.js [--dry-run] [--source=<id>]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { sources as fileSources } from "./sources.js";
-import { shortHash, jerusalemOffset, canonTitle, titlesSimilar, isJunkImageUrl } from "./lib/util.js";
+import { shortHash, jerusalemOffset, canonTitle, titlesSimilar, isJunkImageUrl, DIRECTORY_CATS } from "./lib/util.js";
 import { dbConfigured, upsertEvents, logRun, getSources, eventsMissingPrice, updateEvent, updateSourceRow, deleteSourceEvents, pruneStaleEvents, knownImages } from "./lib/db.js";
 import { enrichPrices } from "./lib/enrichPrice.js";
 import { closeBrowser } from "./lib/render.js";
 import { fetchOgImage, fetchPageInfo } from "./lib/fetchPage.js";
 import { getCostUSD } from "./lib/ai.js";
-
-// "Directory" categories: shown as info cards (image/phone/name/description/link),
-// NOT scraped for events.
-const DIRECTORY_CATS = new Set(["bars", "restaurants", "festival"]);
 
 /** An image reused across many events in one source is a banner/logo, not a
  *  per-event poster — null it so a real image (or clean placeholder) takes over. */

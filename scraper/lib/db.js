@@ -131,6 +131,18 @@ export async function upcomingEvents() {
   );
 }
 
+/** source_id -> newest last_seen_at, so a source that stopped producing shows up. */
+export async function lastSeenBySource(ids) {
+  const out = new Map();
+  for (const id of ids) {
+    const rows = await rest(
+      `events?source_id=eq.${encodeURIComponent(id)}&select=last_seen_at&order=last_seen_at.desc&limit=1`
+    );
+    if (rows[0]?.last_seen_at) out.set(id, rows[0].last_seen_at);
+  }
+  return out;
+}
+
 export async function logRun(run) {
   if (!dbConfigured()) return;
   await rest("scrape_runs", {

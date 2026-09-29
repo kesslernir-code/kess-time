@@ -30,7 +30,12 @@ pulls events from venue **websites** into Supabase; a static page on Netlify
   where one's event_url is literally its source's own listing/homepage URL —
   a strategy switch's orphaned old-scheme row often has a wrongly-guessed title
   that won't text-match its correctly-titled replacement, so title similarity
-  alone misses it), and a QC gate (per-source coverage flags). listing-detail-ai
+  alone misses it), a QC gate (per-source coverage flags) and a **gone-quiet
+  alarm** (a source whose newest `last_seen_at` is 3+ days old — the signal that
+  a venue has silently dropped off the page). Both are GitHub `::warning::`
+  annotations, not job failures: the job used to fail on QC coverage, so every
+  run was red and a genuinely broken source was invisible for weeks. A red run
+  must keep meaning "something broke". listing-detail-ai
   sources also get last_seen_at
   refreshed here so the 48h stale-prune doesn't delete still-listed events.
 - `scraper/strategies/*` — one per extraction approach (see README table).

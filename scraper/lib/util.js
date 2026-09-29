@@ -40,6 +40,9 @@ export function inferYear(month, day, now = new Date()) {
 
 /** Hebrew month name -> number, shared by strategies that parse "day + Hebrew
  *  month name" dates off rendered pages (smarticket, batsheva schedule). */
+/** Categories that describe a PLACE rather than an event — info cards, no events. */
+export const DIRECTORY_CATS = new Set(["bars", "restaurants", "festival"]);
+
 export const HE_MONTHS = {
   "ינואר": 1, "פברואר": 2, "מרץ": 3, "אפריל": 4, "מאי": 5, "יוני": 6,
   "יולי": 7, "אוגוסט": 8, "ספטמבר": 9, "אוקטובר": 10, "נובמבר": 11, "דצמבר": 12,

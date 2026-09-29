@@ -13,10 +13,10 @@
 //   3. QC GATE: per-source image coverage with pass/warn/fail markers, so a
 //      regression surfaces loudly instead of shipping placeholders silently.
 // Usage: node scraper/check.js
-import { dbConfigured, upcomingEvents, updateEvent, deleteEventById, logRun, getSources } from "./lib/db.js";
+import { dbConfigured, upcomingEvents, updateEvent, deleteEventById, logRun, getSources, lastSeenBySource } from "./lib/db.js";
 import { fetchOgImage } from "./lib/fetchPage.js";
 import { renderPage, closeBrowser } from "./lib/render.js";
-import { isJunkImageUrl, titlesSimilar, todayISODate } from "./lib/util.js";
+import { isJunkImageUrl, titlesSimilar, todayISODate, DIRECTORY_CATS } from "./lib/util.js";
 import { rehostImage, ensureBucket, isRehosted } from "./lib/storage.js";
 import { extractEventsFromImages, aiConfigured } from "./lib/ai.js";
 import { fetchCatalog } from "./lib/catalog.js";
@@ -255,4 +255,29 @@ console.log(`\n${fails.length === 0 ? "✓ QC pass (no source below 50% images)"
 // as a GitHub annotation instead and leave a red job to mean "something broke".
 for (const q of fails) {
   console.log(`::warning title=QC image coverage::${q.id}: ${q.img}/${q.n} events imaged (${Math.round(q.cov * 100)}%)`);
+}
+
+// A source that used to produce rows and now refreshes none is the failure that
+// actually makes a venue vanish from the page, and nothing was watching for it:
+// radical returned 0 events without ever throwing, and mazkeka's daily 403 is
+// classified as "transient" in index.js, which it is for one run and is not
+// after three weeks. The scrape runs immediately before this, so a healthy
+// source always has a last_seen_at from minutes ago.
+const STALE_DAYS = 3;
+const eventSources = ((await getSources()) || []).filter((s) => !DIRECTORY_CATS.has(s.category));
+const lastSeen = await lastSeenBySource(eventSources.map((s) => s.id));
+const quiet = eventSources.filter((s) => {
+  const seen = lastSeen.get(s.id);
+  return seen && Date.now() - Date.parse(seen) > STALE_DAYS * 864e5;
+});
+// Annotation rather than a failed job for now: three sources are knowingly dead
+// (hameretz2 is unscrapable by design, muslala and work-off-art have stale URLs)
+// and failing on them would put the run back to permanently red, which is the
+// exact thing that hid this. Once those are fixed or disabled, make this exit 1.
+if (quiet.length) {
+  console.log(`\nSOURCES GONE QUIET — produced nothing for ${STALE_DAYS}+ days:`);
+  for (const s of quiet) {
+    console.log(`  ✗ ${s.id} (${s.name}): last row ${lastSeen.get(s.id)}`);
+    console.log(`::warning title=Source gone quiet::${s.id} has produced nothing since ${lastSeen.get(s.id)}`);
+  }
 }
