@@ -18,7 +18,9 @@ const targets = [
 for (const [name, url] of targets) {
   console.log(`\n=== ${name} — ${url}`);
   try {
-    const r = await renderPage(url, { timeoutMs: 45000, settleMs: 4000 });
+    // The challenge page says "Verification successful. Waiting for … to
+    // respond", so 4s just cut it off mid-handshake. Give it 25s to redirect.
+    const r = await renderPage(url, { timeoutMs: 60000, settleMs: 25000 });
     const html = r?.html || "";
     const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "(none)";
     const challenge = /Just a moment|cf-browser-verification|challenge-platform|Attention Required/i.test(html);
