@@ -1,5 +1,8 @@
 [build]
   publish = "web"
+  # Each production deploy costs 15 Netlify credits. Exit 0 = skip: only the
+  # page, its functions and their deps are the site; scraper/supabase/docs are not.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- web netlify netlify.toml package.json package-lock.json"
 
 # The Supabase URL + anon key are public by design (baked into web/config.js so
 # the static page can read Supabase under SELECT-only RLS). Tell Netlify's secret
